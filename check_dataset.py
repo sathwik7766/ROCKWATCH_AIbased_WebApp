@@ -1,17 +1,4 @@
-"""
-check_dataset.py
------------------
-Run this after copying Kaggle images into data/dataset/stable/ and
-data/dataset/risk/, BEFORE running train_classifier.py.
 
-It reports how many images are in each folder and, if one class has way
-more images than the other (common with the Bijie dataset: ~2003
-non-landslide vs ~770 landslide), it randomly trims the larger folder's
-COPY down to roughly match -- your original files are never deleted,
-only copied into a new balanced folder.
-
-Run:  python check_dataset.py
-"""
 
 import os
 import random
