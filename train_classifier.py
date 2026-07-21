@@ -1,39 +1,4 @@
-"""
-train_classifier.py
---------------------
-STEP 4: Train a classifier to label a slope image as "stable" or "risk".
 
-This version fixes "always predicts stable" (class collapse) with three
-changes from the original:
-
-  1. CLASS WEIGHTING -- if your dataset has 2003 stable vs 770 risk images,
-     the model can minimize loss just by always guessing "stable" (~72%
-     accuracy for zero effort). Class weights penalize that shortcut by
-     making mistakes on the minority class ("risk") cost more.
-
-  2. TRANSFER LEARNING -- instead of a tiny CNN learning from scratch on a
-     few hundred images (prone to collapsing to the easy answer), this uses
-     MobileNetV2 pretrained on ImageNet as a frozen feature extractor, with
-     only a small trainable head on top. Far less likely to collapse, even
-     on a small/imbalanced dataset.
-
-  3. BUILT-IN SANITY CHECK -- after training, this script runs the model on
-     every validation image itself and prints a per-class breakdown, so you
-     immediately see if it collapsed, instead of finding out later via
-     predict.py.
-
-Expected folder structure (unchanged):
-    data/dataset/
-        stable/
-        risk/
-    (or data/dataset_balanced/ if you ran check_dataset.py)
-
-Install first:
-    pip install tensorflow pillow --break-system-packages
-
-Run:
-    python train_classifier.py
-"""
 
 import os
 import numpy as np
@@ -43,7 +8,7 @@ from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 # ---------- CONFIG ----------
-DATA_DIR = "data/dataset"       # change to "data/dataset_balanced" if you ran check_dataset.py
+DATA_DIR = "data/dataset"   
 IMG_SIZE = (128, 128)
 BATCH_SIZE = 16
 EPOCHS = 25
@@ -81,11 +46,10 @@ def build_datasets():
         image_size=IMG_SIZE,
         batch_size=BATCH_SIZE,
     )
-    class_names = train_ds.class_names  # alphabetical: ['risk', 'stable']
+    class_names = train_ds.class_names  
     print("Classes found:", class_names)
 
-    # MobileNetV2 expects inputs preprocessed to [-1, 1], not [0, 1] --
-    # this is different from the old from-scratch version's Rescaling(1/255).
+
     train_ds = train_ds.map(lambda x, y: (preprocess_input(x), y)).cache().prefetch(tf.data.AUTOTUNE)
     val_ds = val_ds.map(lambda x, y: (preprocess_input(x), y)).cache().prefetch(tf.data.AUTOTUNE)
 
@@ -234,7 +198,6 @@ def main():
     print(f"Final train accuracy: {final_train_acc:.3f}")
     print(f"Final val accuracy:   {final_val_acc:.3f}")
 
-    # Run the real sanity check -- this is the part that tells you if it worked
     evaluate_per_class(model, val_ds, class_names)
 
 
