@@ -1,19 +1,10 @@
 """
-movement_detector.py
----------------------
-STEP 3 of the project: Change / movement detection between consecutive
-camera frames of a rock slope.
-
 Three techniques, from simplest to most informative:
   1. Frame differencing  -> fast, catches any pixel-level change
   2. SSIM (structural similarity) -> catches structural changes, ignores
      minor lighting noise better than raw differencing
   3. Optical flow (Farneback) -> estimates actual motion/displacement,
      which is the closest thing to "how much did the rock move"
-
-Each function returns a single movement_score (0.0 = no change,
-higher = more change). You will feed this score into a rolling
-threshold to decide "stable" vs "anomaly" over time.
 """
 
 import cv2
@@ -42,7 +33,6 @@ def frame_diff_score(prev_gray, curr_gray, blur_ksize=5):
     diff = cv2.absdiff(prev_blur, curr_blur)
     _, thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)
 
-    # score = fraction of pixels that changed significantly
     score = float(np.count_nonzero(thresh)) / thresh.size
     return score, thresh
 
@@ -53,7 +43,7 @@ def ssim_score(prev_gray, curr_gray):
     Returns dissimilarity score: 0 = identical, 1 = completely different.
     (We return 1 - SSIM so that, like the other functions, HIGHER = more change.)
     """
-    # Lightweight SSIM implementation (no extra dependency beyond opencv/numpy)
+
     C1 = (0.01 * 255) ** 2
     C2 = (0.03 * 255) ** 2
 
@@ -106,7 +96,7 @@ def combined_movement_score(prev_path, curr_path, weights=(0.3, 0.4, 0.3)):
     ss_score = ssim_score(prev_gray, curr_gray)
     of_score = optical_flow_score(prev_gray, curr_gray)
 
-    # optical flow magnitude isn't naturally in [0,1], so normalize roughly
+
     of_score_norm = min(of_score / 5.0, 1.0)
 
     combined = (
