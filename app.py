@@ -1,8 +1,5 @@
 """
-app.py
-------
 Main Flask application.
-
 Routes:
   /register       - create account
   /login          - log in
@@ -13,12 +10,6 @@ Routes:
   /history        - table of all past frames + scores
   /alerts         - table of raised alerts
 
-Run:
-  1. Start XAMPP, turn on Apache + MySQL
-  2. Import schema.sql via phpMyAdmin (creates rockfall_db)
-  3. pip install flask flask-mysqldb werkzeug
-  4. python app.py
-  5. Visit http://127.0.0.1:5000
 """
 
 import os
@@ -34,9 +25,7 @@ from werkzeug.utils import secure_filename
 from config import Config
 from movement_detector import combined_movement_score
 
-# The CNN classifier is optional -- app should still run fine before you've
-# trained it. We try to import + load it once at startup; if the model file
-# doesn't exist yet, we just skip classification and log a warning.
+
 CLASSIFIER_AVAILABLE = False
 try:
     from predict import predict_image
@@ -124,7 +113,6 @@ def build_alert_message(combined_score, classification, confidence):
     return "\n".join(lines)
 
 
-# ---------- auth routes ----------
 
 @app.route("/")
 def index():
@@ -218,8 +206,7 @@ def locations():
             mysql.connection.commit()
             flash(f"Location '{name}' created.", "success")
 
-    # For each location, show frame count + most recent alert status,
-    # so this page works as a quick overview across all monitored sites.
+
     cur.execute(
         """SELECT l.*,
                   (SELECT COUNT(*) FROM frames f WHERE f.location_id = l.id) AS frame_count,
@@ -237,7 +224,6 @@ def locations():
     return render_template("locations.html", locations=location_list)
 
 
-# ---------- core app routes (all scoped to one location) ----------
 
 @app.route("/dashboard")
 @login_required
@@ -270,7 +256,7 @@ def location_dashboard(location_id):
         cur.close()
         return redirect(url_for("locations"))
 
-    # last 20 movement logs for THIS location only, chronological for the chart
+
     cur.execute(
         """SELECT ml.*, f.filename, f.uploaded_at
            FROM movement_logs ml
@@ -322,8 +308,7 @@ def upload(location_id):
     filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
     file.save(filepath)
 
-    # find this LOCATION's most recent frame BEFORE this one, to compare against
-    # -- scoping by location_id is what keeps each site's history independent
+
     cur.execute(
         """SELECT f.id, f.filename FROM frames f
            WHERE f.location_id = %s ORDER BY f.uploaded_at DESC LIMIT 1""",
