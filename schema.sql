@@ -1,8 +1,3 @@
--- schema.sql
--- Run this in phpMyAdmin (XAMPP) or via mysql CLI to set up the database.
---
--- In phpMyAdmin: open http://localhost/phpmyadmin, click "SQL" tab,
--- paste this whole file, click "Go".
 
 CREATE DATABASE IF NOT EXISTS rockfall_db;
 USE rockfall_db;
@@ -16,9 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Camera locations -- each user can monitor multiple slopes/sites.
--- Frames are compared only against the previous frame from the SAME
--- location, so each location gets its own independent movement history.
+
 CREATE TABLE IF NOT EXISTS locations (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -48,9 +41,9 @@ CREATE TABLE IF NOT EXISTS movement_logs (
     ssim_score FLOAT,
     optical_flow_score FLOAT,
     combined_score FLOAT,
-    classification VARCHAR(20),      -- 'stable' or 'risk' (from CNN, if used)
-    confidence_score FLOAT,           -- CNN's confidence in that classification (0-1)
-    is_anomaly BOOLEAN DEFAULT FALSE, -- combined_score crossed threshold
+    classification VARCHAR(20),
+    confidence_score FLOAT,          
+    is_anomaly BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (curr_frame_id) REFERENCES frames(id) ON DELETE CASCADE
@@ -67,32 +60,4 @@ CREATE TABLE IF NOT EXISTS alerts (
     FOREIGN KEY (movement_log_id) REFERENCES movement_logs(id) ON DELETE CASCADE
 );
 
--- If you already ran this schema before and just pulled the update, run
--- ONLY this line in phpMyAdmin's SQL tab instead of the whole file again:
--- ALTER TABLE movement_logs ADD COLUMN confidence_score FLOAT AFTER classification;
 
--- MIGRATION: adding multi-location support to an existing database.
--- Run these lines (in order) in phpMyAdmin's SQL tab if you already have
--- data and just pulled this update -- do NOT re-run the whole file, it
--- would wipe your existing tables.
---
--- CREATE TABLE IF NOT EXISTS locations (
---     id INT AUTO_INCREMENT PRIMARY KEY,
---     user_id INT NOT NULL,
---     name VARCHAR(100) NOT NULL,
---     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
--- );
---
--- ALTER TABLE frames ADD COLUMN location_id INT NULL AFTER user_id;
---
--- INSERT INTO locations (user_id, name)
--- SELECT id, 'Default Location' FROM users;
---
--- UPDATE frames f
--- JOIN locations l ON l.user_id = f.user_id AND l.name = 'Default Location'
--- SET f.location_id = l.id
--- WHERE f.location_id IS NULL;
---
--- ALTER TABLE frames MODIFY location_id INT NOT NULL;
--- ALTER TABLE frames ADD FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE;
