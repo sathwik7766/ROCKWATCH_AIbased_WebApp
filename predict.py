@@ -1,9 +1,4 @@
-"""
-predict.py
-----------
-Load the trained classifier and predict "stable" vs "risk" for a new image.
-This is what your Flask backend will call whenever a new camera image arrives.
-"""
+
 
 import sys
 import numpy as np
