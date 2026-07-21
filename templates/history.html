@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ location.name }} · History{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <span class="breadcrumb"><a href="{{ url_for('location_dashboard', location_id=location.id) }}" class="text-faint">{{ location.name }}</a> / Full History</span>
+        <h1>Frame History</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Time</th>
+                    <th>Filename</th>
+                    <th>Frame diff</th>
+                    <th>SSIM</th>
+                    <th>Optical flow</th>
+                    <th>Combined</th>
+                    <th>CNN class</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr class="{{ 'row-high' if log.is_anomaly else '' }}">
+                    <td class="mono text-muted">{{ log.id }}</td>
+                    <td class="mono">{{ log.uploaded_at }}</td>
+                    <td class="text-muted">{{ log.filename }}</td>
+                    <td class="data-cell">{{ "%.4f"|format(log.frame_diff_score) }}</td>
+                    <td class="data-cell">{{ "%.4f"|format(log.ssim_score) }}</td>
+                    <td class="data-cell">{{ "%.4f"|format(log.optical_flow_score) }}</td>
+                    <td class="data-cell">{{ "%.4f"|format(log.combined_score) }}</td>
+                    <td>
+                        {% if log.classification %}
+                            <span class="badge {{ 'badge-high' if log.classification == 'risk' else 'badge-stable' }}">{{ log.classification }}{% if log.confidence_score %} {{ (log.confidence_score * 100)|round|int }}%{% endif %}</span>
+                        {% else %}
+                            <span class="badge badge-neutral">n/a</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if log.is_anomaly %}
+                            <span class="badge badge-high">Anomaly</span>
+                        {% else %}
+                            <span class="badge badge-stable">Stable</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr class="empty-row"><td colspan="9">No history yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

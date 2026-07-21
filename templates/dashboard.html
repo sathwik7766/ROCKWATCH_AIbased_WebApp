@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}{{ location.name }} · Dashboard{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <span class="breadcrumb"><a href="{{ url_for('locations') }}" class="text-faint">Locations</a> / Station Dashboard</span>
+        <h1>{{ location.name }}</h1>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline btn-sm" href="{{ url_for('history', location_id=location.id) }}">History</a>
+        <a class="btn btn-outline btn-sm" href="{{ url_for('alerts', location_id=location.id) }}">Alerts</a>
+    </div>
+</div>
+
+<div class="grid grid-sidebar">
+    <div>
+        <div class="card">
+            <h3 class="card-title">Upload Frame</h3>
+            <p class="card-subtitle">Simulates a new capture arriving from this site's camera.</p>
+            <form method="POST" action="{{ url_for('upload', location_id=location.id) }}" enctype="multipart/form-data">
+                <div class="field">
+                    <input type="file" name="frame" accept=".png,.jpg,.jpeg" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Upload &amp; Analyze</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Station Summary</h3>
+            <div class="stat-row">
+                <div class="stat">
+                    <div class="stat-label">Alerts Raised</div>
+                    <div class="stat-value {{ 'accent-clay' if alert_count > 0 else '' }}">{{ alert_count }}</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Threshold</div>
+                    <div class="stat-value accent-amber">{{ "%.2f"|format(threshold) }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <h3 class="card-title">Movement Score Over Time</h3>
+            <canvas id="scoreChart" height="110"></canvas>
+        </div>
+
+        <div class="card">
+            <h3 class="card-title">Recent Frames</h3>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Frame diff</th>
+                            <th>SSIM</th>
+                            <th>Optical flow</th>
+                            <th>Combined</th>
+                            <th>CNN class</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs|reverse %}
+                        <tr class="{{ 'row-high' if log.is_anomaly else '' }}">
+                            <td class="mono">{{ log.uploaded_at }}</td>
+                            <td class="data-cell">{{ "%.4f"|format(log.frame_diff_score) }}</td>
+                            <td class="data-cell">{{ "%.4f"|format(log.ssim_score) }}</td>
+                            <td class="data-cell">{{ "%.4f"|format(log.optical_flow_score) }}</td>
+                            <td class="data-cell">{{ "%.4f"|format(log.combined_score) }}</td>
+                            <td>
+                                {% if log.classification %}
+                                    <span class="badge {{ 'badge-high' if log.classification == 'risk' else 'badge-stable' }}">{{ log.classification }}{% if log.confidence_score %} {{ (log.confidence_score * 100)|round|int }}%{% endif %}</span>
+                                {% else %}
+                                    <span class="badge badge-neutral">n/a</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if log.is_anomaly %}
+                                    <span class="badge badge-high">Anomaly</span>
+                                {% else %}
+                                    <span class="badge badge-stable">Stable</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="empty-row"><td colspan="7">No frames uploaded yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const labels = [{% for log in logs %}"{{ log.uploaded_at }}",{% endfor %}];
+    const scores = [{% for log in logs %}{{ log.combined_score }},{% endfor %}];
+    const threshold = {{ threshold }};
+
+    new Chart(document.getElementById('scoreChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Movement score',
+                    data: scores,
+                    borderColor: '#386a8c',
+                    backgroundColor: 'rgba(56,106,140,0.08)',
+                    borderWidth: 2,
+                    pointRadius: 3,
+                    pointBackgroundColor: '#386a8c',
+                    tension: 0.25,
+                    fill: true,
+                },
+                {
+                    label: 'Threshold',
+                    data: labels.map(() => threshold),
+                    borderColor: '#c0392b',
+                    borderWidth: 1.5,
+                    borderDash: [6, 4],
+                    pointRadius: 0,
+                    fill: false,
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: { color: 'rgba(38,38,32,0.06)' },
+                    ticks: { color: '#6b6a5f', font: { family: 'IBM Plex Mono', size: 11 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: '#9b988a', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 0, autoSkip: true }
+                }
+            },
+            plugins: {
+                legend: { labels: { color: '#6b6a5f', font: { family: 'IBM Plex Sans', size: 12 } } }
+            }
+        }
+    });
+</script>
+{% endblock %}

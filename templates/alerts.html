@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ location.name }} · Alerts{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <span class="breadcrumb"><a href="{{ url_for('location_dashboard', location_id=location.id) }}" class="text-faint">{{ location.name }}</a> / Alert Log</span>
+        <h1>Alerts</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Time</th>
+                    <th>Message</th>
+                    <th>Score</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alert in alerts %}
+                <tr class="row-high">
+                    <td class="mono text-muted">{{ alert.id }}</td>
+                    <td class="mono">{{ alert.created_at }}</td>
+                    <td class="mono" style="white-space: pre-line; color: var(--color-text);">{{ alert.message }}</td>
+                    <td><span class="badge badge-high">{{ "%.4f"|format(alert.combined_score) }}</span></td>
+                </tr>
+                {% else %}
+                <tr class="empty-row"><td colspan="4">No alerts raised yet — all readings within threshold.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

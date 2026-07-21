@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Locations · Rockfall Watch{% endblock %}
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <span class="breadcrumb">Monitoring Network</span>
+        <h1>Locations</h1>
+    </div>
+</div>
+
+<div class="grid grid-sidebar">
+    <div>
+        <div class="card">
+            <h3 class="card-title">Add Location</h3>
+            <p class="card-subtitle">Each site tracks its own frame history and movement graph independently.</p>
+            <form method="POST" action="{{ url_for('locations') }}">
+                <div class="field">
+                    <label for="name">Site name</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="e.g. North Ridge Slope" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">Add Location</button>
+            </form>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <h3 class="card-title">Monitored Sites</h3>
+            <div class="table-wrap">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Site</th>
+                            <th>Frames</th>
+                            <th>Alerts</th>
+                            <th>Established</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for loc in locations %}
+                        <tr>
+                            <td>{{ loc.name }}</td>
+                            <td class="mono">{{ loc.frame_count }}</td>
+                            <td>
+                                {% if loc.alert_count > 0 %}
+                                    <span class="badge badge-high">{{ loc.alert_count }} alert{{ 's' if loc.alert_count != 1 else '' }}</span>
+                                {% else %}
+                                    <span class="badge badge-stable">Clear</span>
+                                {% endif %}
+                            </td>
+                            <td class="mono text-muted">{{ loc.created_at }}</td>
+                            <td>
+                                <a href="{{ url_for('location_dashboard', location_id=loc.id) }}" class="btn btn-outline btn-sm">Open</a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr class="empty-row"><td colspan="5">No locations yet — add one to get started.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

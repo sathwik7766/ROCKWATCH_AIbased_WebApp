@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Rockfall Watch{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="shell">
+        <header class="topbar">
+            <a class="brand" href="{{ url_for('locations') if session.user_id else url_for('login') }}">
+                <svg class="brand-mark" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 20L9 8L13 15L17 6L24 20" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M2 20H24" stroke-width="1.8" stroke-linecap="round" opacity="0.4"/>
+                </svg>
+                Rockfall Watch
+            </a>
+            {% if session.user_id %}
+            <nav class="topbar-nav">
+                <a class="btn btn-outline btn-sm" href="{{ url_for('locations') }}">Locations</a>
+                <a class="btn btn-outline btn-sm" href="{{ url_for('logout') }}">{{ session.username }} · Log out</a>
+            </nav>
+            {% endif %}
+        </header>
+
+        <main class="container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">
+                            <span>{{ message }}</span>
+                            <button type="button" class="flash-close" onclick="this.parentElement.remove()">&times;</button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

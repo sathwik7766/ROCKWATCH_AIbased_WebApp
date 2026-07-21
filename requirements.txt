@@ -1,0 +1,7 @@
+opencv-python
+numpy
+tensorflow
+flask
+Flask-MySQLdb
+werkzeug
+pillow
